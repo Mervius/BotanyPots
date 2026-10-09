@@ -3,7 +3,6 @@ package net.darkhax.botanypots.common.impl;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.darkhax.bookshelf.common.api.data.codecs.stream.StreamCodecs;
-import net.darkhax.bookshelf.common.api.data.enchantment.EnchantmentLevel;
 import net.darkhax.bookshelf.common.api.function.CachedSupplier;
 import net.darkhax.bookshelf.common.api.util.DataHelper;
 import net.darkhax.bookshelf.common.api.util.MathsHelper;
@@ -37,6 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -139,7 +139,17 @@ public class Helpers {
 
     public static float efficiencyModifier(RegistryAccess registryAccess, ItemStack stack) {
         float modifier = 0f;
-        modifier += EnchantmentLevel.HIGHEST.get(INCREASE_POT_GROWTH_TAG, stack) * BotanyPotsMod.CONFIG.get().gameplay.efficiency_growth_modifier;
+        int level = 0;
+
+        var enchantments = registryAccess.registryOrThrow(Registries.ENCHANTMENT);
+        for (Holder<Enchantment> enchantment : enchantments.getTagOrEmpty(INCREASE_POT_GROWTH_TAG)) {
+            int tempLevel = EnchantmentHelper.getItemEnchantmentLevel(enchantment,stack);
+            if (tempLevel > level) {
+                level = tempLevel;
+            }
+        }
+        modifier += level
+                * BotanyPotsMod.CONFIG.get().gameplay.efficiency_growth_modifier;
         modifier += (float) getAttributeValue(GROWTH_MOD_ATTRIBUTE.get(), stack, 0f);
         return modifier;
     }
